@@ -16,79 +16,53 @@ app.add_middleware(
 
 @app.get("/available-hours")
 async def get_available_hours():
-    # Sample data for demonstration with 15-minute blocks
-    sample_data = {
-        "2024-03-20": [
-            {
-                "from": "2024-03-20T09:00:00Z",
-                "to": "2024-03-20T09:15:00Z"
-            },
-            {
-                "from": "2024-03-20T09:15:00Z",
-                "to": "2024-03-20T09:30:00Z"
-            },
-            {
-                "from": "2024-03-20T09:30:00Z",
-                "to": "2024-03-20T09:45:00Z"
-            },
-            {
-                "from": "2024-03-20T09:45:00Z",
-                "to": "2024-03-20T10:00:00Z"
-            },
-            {
-                "from": "2024-03-20T14:00:00Z",
-                "to": "2024-03-20T14:15:00Z"
-            },
-            {
-                "from": "2024-03-20T14:15:00Z",
-                "to": "2024-03-20T14:30:00Z"
-            },
-            {
-                "from": "2024-03-20T14:30:00Z",
-                "to": "2024-03-20T14:45:00Z"
-            },
-            {
-                "from": "2024-03-20T14:45:00Z",
-                "to": "2024-03-20T15:00:00Z"
-            }
-        ],
-        "2024-03-21": [
-            {
-                "from": "2024-03-21T10:00:00Z",
-                "to": "2024-03-21T10:15:00Z"
-            },
-            {
-                "from": "2024-03-21T10:15:00Z",
-                "to": "2024-03-21T10:30:00Z"
-            },
-            {
-                "from": "2024-03-21T10:30:00Z",
-                "to": "2024-03-21T10:45:00Z"
-            },
-            {
-                "from": "2024-03-21T10:45:00Z",
-                "to": "2024-03-21T11:00:00Z"
-            },
-            {
-                "from": "2024-03-21T15:00:00Z",
-                "to": "2024-03-21T15:15:00Z"
-            },
-            {
-                "from": "2024-03-21T15:15:00Z",
-                "to": "2024-03-21T15:30:00Z"
-            },
-            {
-                "from": "2024-03-21T15:30:00Z",
-                "to": "2024-03-21T15:45:00Z"
-            },
-            {
-                "from": "2024-03-21T15:45:00Z",
-                "to": "2024-03-21T16:00:00Z"
-            }
-        ]
-    }
+    # Get current date
+    current_date = datetime.now()
     
-    return sample_data
+    # Initialize response dictionary
+    available_hours = {}
+    
+    # Generate data for current week and next week (14 days)
+    for day_offset in range(14):
+        current_day = current_date + timedelta(days=day_offset)
+        
+        # Skip weekends (5 is Saturday, 6 is Sunday)
+        if current_day.weekday() >= 5:
+            continue
+            
+        date_str = current_day.strftime("%Y-%m-%d")
+        available_hours[date_str] = []
+        
+        # Add two time blocks for each weekday
+        # Morning block: 9:00-10:00
+        morning_start = current_day.replace(hour=9, minute=0, second=0, microsecond=0)
+        morning_end = current_day.replace(hour=10, minute=0, second=0, microsecond=0)
+        
+        # Afternoon block: 14:00-15:00
+        afternoon_start = current_day.replace(hour=14, minute=0, second=0, microsecond=0)
+        afternoon_end = current_day.replace(hour=15, minute=0, second=0, microsecond=0)
+        
+        # Add 15-minute intervals for morning block
+        current_time = morning_start
+        while current_time < morning_end:
+            next_time = current_time + timedelta(minutes=15)
+            available_hours[date_str].append({
+                "from": current_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "to": next_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+            })
+            current_time = next_time
+            
+        # Add 15-minute intervals for afternoon block
+        current_time = afternoon_start
+        while current_time < afternoon_end:
+            next_time = current_time + timedelta(minutes=15)
+            available_hours[date_str].append({
+                "from": current_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "to": next_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+            })
+            current_time = next_time
+    
+    return available_hours
 
 if __name__ == "__main__":
     import uvicorn
