@@ -68,10 +68,6 @@ def generate_available_hours(start_date: datetime = None) -> Dict[str, List[Dict
         block_start = current_day_mx.replace(hour=start_hour, minute=start_minute, second=0, microsecond=0)
         block_end = current_day_mx.replace(hour=end_hour, minute=end_minute, second=0, microsecond=0)
         
-        # Convert back to UTC for comparison with calendar events
-        block_start = block_start.astimezone(pytz.UTC)
-        block_end = block_end.astimezone(pytz.UTC)
-        
         # Add 15-minute intervals
         current_time = block_start
         while current_time < block_end:
@@ -83,16 +79,24 @@ def generate_available_hours(start_date: datetime = None) -> Dict[str, List[Dict
                 event_start = datetime.fromisoformat(event['start'].replace('Z', '+00:00'))
                 event_end = datetime.fromisoformat(event['end'].replace('Z', '+00:00'))
                 
+                # Convert event times to Mexico City time for comparison
+                event_start_mx = event_start.astimezone(mexico_tz)
+                event_end_mx = event_end.astimezone(mexico_tz)
+                
                 # Check for overlap
-                if (current_time < event_end and next_time > event_start):
-                    print(f"Event {event['name']} overlaps with time block {current_time.astimezone(mexico_tz)} - {next_time.astimezone(mexico_tz)}")
+                if (current_time < event_end_mx and next_time > event_start_mx):
+                    print(f"Event {event['name']} overlaps with time block {current_time} - {next_time}")
                     is_available = False
                     break
             
             if is_available:
+                # Convert back to UTC for the response
+                current_time_utc = current_time.astimezone(pytz.UTC)
+                next_time_utc = next_time.astimezone(pytz.UTC)
+                
                 schedule[date_str].append({
-                    "from": current_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    "to": next_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+                    "from": current_time_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "to": next_time_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
                 })
             
             current_time = next_time
