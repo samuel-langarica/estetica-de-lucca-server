@@ -11,7 +11,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Load environment variables from .env file
-load_dotenv()
+#load_dotenv()
 
 def get_google_calendar_config():
     """
@@ -28,7 +28,16 @@ def get_google_calendar_config():
         logger.info(f"Private key starts with: {private_key[:20]}...")
         
         # Ensure proper formatting of the private key
+        # First replace literal \n with actual newlines
         private_key = private_key.replace('\\n', '\n')
+        # Then ensure we have proper line breaks
+        if '\n' not in private_key:
+            # If no newlines found, try to add them after every 64 characters
+            if len(private_key) > 64:
+                parts = []
+                for i in range(0, len(private_key), 64):
+                    parts.append(private_key[i:i+64])
+                private_key = '\n'.join(parts)
         
         # Validate private key format
         if not private_key.startswith('-----BEGIN PRIVATE KEY-----'):
