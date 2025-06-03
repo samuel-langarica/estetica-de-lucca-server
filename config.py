@@ -11,7 +11,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Load environment variables from .env file
-#load_dotenv()
+load_dotenv()
 
 def get_google_calendar_config():
     """
@@ -24,11 +24,31 @@ def get_google_calendar_config():
             logger.error("GOOGLE_CALENDAR_PRIVATE_KEY environment variable is not set")
             raise ValueError("GOOGLE_CALENDAR_PRIVATE_KEY environment variable is not set")
             
+        # Log the first few characters of the private key (safely)
+        logger.info(f"Private key starts with: {private_key[:20]}...")
+        
         # Ensure proper formatting of the private key
         private_key = private_key.replace('\\n', '\n')
+        
+        # Validate private key format
         if not private_key.startswith('-----BEGIN PRIVATE KEY-----'):
-            logger.error("Private key is not properly formatted")
-            raise ValueError("Private key is not properly formatted")
+            logger.error("Private key is missing BEGIN marker")
+            raise ValueError("Private key must start with '-----BEGIN PRIVATE KEY-----'")
+            
+        if not private_key.endswith('-----END PRIVATE KEY-----'):
+            logger.error("Private key is missing END marker")
+            raise ValueError("Private key must end with '-----END PRIVATE KEY-----'")
+            
+        # Check if the key has proper line breaks
+        if '\n' not in private_key:
+            logger.error("Private key is missing line breaks")
+            raise ValueError("Private key must contain line breaks")
+            
+        # Check if the key has the proper structure
+        key_parts = private_key.split('\n')
+        if len(key_parts) < 3:
+            logger.error("Private key has invalid structure")
+            raise ValueError("Private key must have at least 3 lines (BEGIN, content, END)")
             
         config = {
             "type": os.getenv("GOOGLE_CALENDAR_TYPE", "service_account"),
@@ -43,6 +63,10 @@ def get_google_calendar_config():
             "client_x509_cert_url": os.getenv("GOOGLE_CALENDAR_CLIENT_CERT_URL"),
             "universe_domain": os.getenv("GOOGLE_CALENDAR_UNIVERSE_DOMAIN", "googleapis.com")
         }
+        
+        # Log configuration details (safely)
+        logger.info(f"Configuration loaded with project_id: {config['project_id']}")
+        logger.info(f"Client email: {config['client_email']}")
         
         # Validate required fields
         required_fields = ['project_id', 'private_key_id', 'private_key', 'client_email']

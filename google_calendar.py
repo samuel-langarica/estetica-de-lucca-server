@@ -18,11 +18,27 @@ SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
 try:
     # Get credentials from environment variables
+    logger.info("Attempting to load Google Calendar configuration...")
     credentials_info = get_google_calendar_config()
-    credentials = service_account.Credentials.from_service_account_info(
-        credentials_info, scopes=SCOPES)
+    
+    # Log the structure of the credentials info (safely)
+    logger.info("Credentials info structure:")
+    for key in credentials_info.keys():
+        if key != 'private_key':  # Don't log the actual private key
+            logger.info(f"- {key}: {'Present' if credentials_info.get(key) else 'Missing'}")
+    
+    logger.info("Attempting to create credentials from service account info...")
+    try:
+        credentials = service_account.Credentials.from_service_account_info(
+            credentials_info, scopes=SCOPES)
+        logger.info("Successfully created credentials object")
+    except Exception as e:
+        logger.error(f"Failed to create credentials: {str(e)}")
+        logger.error("This usually means there's an issue with the private key format")
+        raise
     
     # Create the service
+    logger.info("Attempting to build Google Calendar service...")
     service = build('calendar', 'v3', credentials=credentials)
     logger.info("Successfully initialized Google Calendar service")
 except Exception as e:
