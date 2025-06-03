@@ -11,9 +11,20 @@ SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
 # Try to get credentials from environment variable first, fall back to file if not found
 if 'GOOGLE_CALENDAR_JSON' in os.environ:
-    credentials_info = json.loads(os.environ['GOOGLE_CALENDAR_JSON'])
-    credentials = service_account.Credentials.from_service_account_info(
-        credentials_info, scopes=SCOPES)
+    try:
+        credentials_info = json.loads(os.environ['GOOGLE_CALENDAR_JSON'])
+        # Validate that the required fields are present
+        required_fields = ['type', 'project_id', 'private_key_id', 'private_key', 'client_email']
+        for field in required_fields:
+            if field not in credentials_info:
+                raise ValueError(f"Missing required field in credentials: {field}")
+        
+        credentials = service_account.Credentials.from_service_account_info(
+            credentials_info, scopes=SCOPES)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON in GOOGLE_CALENDAR_JSON environment variable: {str(e)}")
+    except Exception as e:
+        raise ValueError(f"Error loading credentials from environment: {str(e)}")
 else:
     credentials = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=SCOPES)
@@ -21,7 +32,6 @@ else:
 # Crear el servicio
 service = build('calendar', 'v3', credentials=credentials)
 
-# ID del calendario (usualmente email del usuario que compartió su calendario)
 calendar_id = 'samuel.langarica.m@gmail.com'
 
 def get_events(start_date: datetime, end_date: datetime):
