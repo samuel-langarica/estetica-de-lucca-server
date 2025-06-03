@@ -28,13 +28,13 @@ def get_google_calendar_config():
         logger.info(f"Private key starts with: {private_key[:20]}...")
         logger.info(f"Private key ends with: {private_key[-20:] if len(private_key) > 20 else private_key}")
         logger.info(f"Private key length: {len(private_key)}")
-        logger.info(f"Private key contains \\n: {'\\n' in private_key}")
+        logger.info(f"Private key contains newline: {'\\n' in private_key}")
         
         # Ensure proper formatting of the private key
         # First replace literal \n with actual newlines
         private_key = private_key.replace('\\n', '\n')
-        logger.info(f"After \\n replacement, key ends with: {private_key[-20:] if len(private_key) > 20 else private_key}")
-        logger.info(f"After \\n replacement, contains actual newlines: {'\n' in private_key}")
+        logger.info(f"After newline replacement, key ends with: {private_key[-20:] if len(private_key) > 20 else private_key}")
+        logger.info(f"After newline replacement, contains actual newlines: {'\n' in private_key}")
         
         # Then ensure we have proper line breaks
         if '\n' not in private_key:
