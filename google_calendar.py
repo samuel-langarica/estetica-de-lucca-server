@@ -3,33 +3,17 @@ from googleapiclient.discovery import build
 from datetime import datetime
 import pytz
 import os
-import json
+from config import get_google_calendar_config
 
-# Carga las credenciales
-SERVICE_ACCOUNT_FILE = 'calendar-access.json'
+# Define scopes
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
-# Try to get credentials from environment variable first, fall back to file if not found
-if 'GOOGLE_CALENDAR_JSON' in os.environ:
-    try:
-        credentials_info = json.loads(os.environ['GOOGLE_CALENDAR_JSON'])
-        # Validate that the required fields are present
-        required_fields = ['type', 'project_id', 'private_key_id', 'private_key', 'client_email']
-        for field in required_fields:
-            if field not in credentials_info:
-                raise ValueError(f"Missing required field in credentials: {field}")
-        
-        credentials = service_account.Credentials.from_service_account_info(
-            credentials_info, scopes=SCOPES)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON in GOOGLE_CALENDAR_JSON environment variable: {str(e)}")
-    except Exception as e:
-        raise ValueError(f"Error loading credentials from environment: {str(e)}")
-else:
-    credentials = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+# Get credentials from environment variables
+credentials_info = get_google_calendar_config()
+credentials = service_account.Credentials.from_service_account_info(
+    credentials_info, scopes=SCOPES)
 
-# Crear el servicio
+# Create the service
 service = build('calendar', 'v3', credentials=credentials)
 
 calendar_id = 'samuel.langarica.m@gmail.com'
@@ -65,4 +49,5 @@ def get_events(start_date: datetime, end_date: datetime):
     return simplified_events
 
 
-print(get_events(datetime(2025, 6, 1), datetime(2025, 6, 30)))  
+if __name__ == '__main__':
+    print(get_events(datetime(2025, 6, 1), datetime(2025, 6, 30)))  
